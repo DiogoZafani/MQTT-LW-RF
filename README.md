@@ -1,17 +1,20 @@
 # MQTT LWT + Retain Demo
 
-Demo pratica de MQTT focada em:
+Este projeto mostra, na pratica, dois recursos importantes do MQTT:
 
 - `Last Will and Testament (LWT)`
-- `retain flag`
+- `Retain Flag`
 
-O projeto sobe um broker Mosquitto com Docker e oferece tres scripts:
+A ideia e simples: um dispositivo publica seu status e um monitor acompanha essas mensagens.
 
-- `npm run device`: simula um dispositivo da estufa
-- `npm run monitor`: observa as mensagens e mostra `retain`, `qos` e `dup`
-- `npm run clear-retained`: limpa o status retido para reiniciar a demo
+## O que tem no projeto
 
-## Como executar
+- `npm run device`: simula um dispositivo IoT
+- `npm run monitor`: mostra as mensagens recebidas
+- `npm run clear-retained`: limpa a ultima mensagem salva no broker
+- `npm run broker`: sobe o Mosquitto com Docker
+
+## Como rodar
 
 1. Instale as dependencias:
 
@@ -25,60 +28,84 @@ npm install
 npm run broker
 ```
 
-3. Em um terminal, inicie o monitor:
+3. Em um terminal, rode o monitor:
 
 ```bash
 npm run monitor
 ```
 
-4. Em outro terminal, inicie o device:
+4. Em outro terminal, rode o dispositivo:
 
 ```bash
 npm run device
 ```
 
-## O que a demo mostra
+## Como demonstrar o retain
 
-### 1. Retain flag
+Quando o `device` conecta, ele publica no topico `estufa/status` uma mensagem `online` com `retain=true`.
 
-Quando o `device` conecta, ele publica `online` no topico `estufa/status` com:
-
-- `qos: 1`
-- `retain: true`
-
-Agora abra um segundo monitor:
+Agora abra mais um terminal e rode novamente:
 
 ```bash
-npm run monitor -- monitor-tarde
+npm run monitor
 ```
 
-Esse novo subscriber recebe imediatamente o ultimo status salvo pelo broker. No log, a mensagem chega com `retain=true`, mostrando que ela veio do armazenamento de retained messages do broker.
+Esse novo monitor vai receber na hora a ultima mensagem de status, mesmo tendo entrado depois. Isso acontece porque o broker guardou a mensagem retida.
 
-### 2. Last Will and Testament
+## Como demonstrar o LWT
 
-O `device` conecta com um `will` configurado no mesmo topico `estufa/status`:
+O `device` foi configurado com um `LWT` no mesmo topico de status.
 
-- payload: `offline`
-- `qos: 1`
-- `retain: true`
+Agora, no terminal do `device`, pressione `Ctrl+C`.
 
-Para demonstrar o LWT na pratica, encerre o processo do `device` com `Ctrl+C`.
+Como o script termina sem avisar normalmente ao broker, o broker entende que a conexao caiu de forma inesperada e publica automaticamente a mensagem `offline`.
 
-O script foi feito para sair sem enviar `DISCONNECT`, entao o broker considera a queda inesperada e publica o `LWT`. O monitor deve mostrar um novo status `offline`, emitido pelo broker.
+O monitor vai mostrar essa mudanca de status.
 
-Se voce abrir outro monitor depois da queda, ele recebera imediatamente esse `offline`, porque o LWT tambem foi publicado com `retain=true`.
+## Quando usar cada um
 
-## Limpar o estado retido
+### LWT
 
-Para apagar o status salvo no broker:
+Use `LWT` quando for importante detectar que um dispositivo caiu ou perdeu conexao.
 
-```bash
-npm run clear-retained
-```
+Exemplos:
 
-Isso publica payload vazio com `retain=true` no topico de status, que e a forma padrao de limpar uma retained message.
+- sensor que parou de responder
+- camera offline
+- controlador que perdeu energia
+- gateway desconectado
 
-## Topicos usados
+### Retain
 
-- `estufa/status`
-- `estufa/telemetria`
+Use `retain` quando um novo subscriber precisar receber imediatamente o ultimo estado conhecido de um topico.
+
+Exemplos:
+
+- ultimo status de um dispositivo
+- modo atual de operacao
+- ultima temperatura publicada
+- estado atual de um rele ou lampada
+
+## Impactos em um sistema IoT real
+
+### Impacto do LWT
+
+Sem `LWT`, o sistema pode demorar para perceber que um dispositivo caiu.
+
+Com `LWT`, fica mais facil:
+
+- detectar falhas rapidamente
+- disparar alertas
+- mostrar status real em dashboards
+- automatizar acoes de contingencia
+
+### Impacto do retain
+
+Sem `retain`, quem entrar depois pode ficar sem contexto ate chegar uma nova mensagem.
+
+Com `retain`, o sistema ganha:
+
+- inicializacao mais rapida
+- dashboards mais consistentes
+- menos necessidade de esperar nova publicacao
+- leitura imediata do ultimo estado conhecido
