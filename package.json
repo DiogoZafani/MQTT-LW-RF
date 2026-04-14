@@ -1,0 +1,16 @@
+{
+  "name": "mqtt-lwt-retain-demo",
+  "version": "1.0.0",
+  "description": "Demo pratica de MQTT Last Will and Testament e retain flag",
+  "type": "module",
+  "scripts": {
+    "broker": "docker compose up -d",
+    "broker:down": "docker compose down",
+    "monitor": "node src/monitor.js",
+    "device": "node src/device.js",
+    "clear-retained": "node src/clearRetained.js"
+  },
+  "dependencies": {
+    "mqtt": "^5.15.1"
+  }
+}
