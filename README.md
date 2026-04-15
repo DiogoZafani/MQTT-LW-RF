@@ -1,18 +1,20 @@
-# MQTT LWT + Retain Demo
+# Trabalho MQTT: LWT e Retain Flag
 
-Este projeto mostra, na pratica, dois recursos importantes do MQTT:
+Este repositorio foi preparado para demonstrar, na pratica, dois recursos do MQTT:
 
 - `Last Will and Testament (LWT)`
 - `Retain Flag`
 
-A ideia e simples: um dispositivo publica seu status e um monitor acompanha essas mensagens.
+A ideia da demonstracao e simples:
 
-## O que tem no projeto
+- um dispositivo publica seu status no topico `casa/temperatura`
+- um monitor se inscreve nesse topico para acompanhar o que acontece
 
-- `npm run device`: simula um dispositivo IoT
-- `npm run monitor`: mostra as mensagens recebidas
-- `npm run clear-retained`: limpa a ultima mensagem salva no broker
-- `npm run broker`: sobe o Mosquitto com Docker
+## O que foi implementado
+
+- `sensorTemperatura.js`: simula um sensor de temperatura
+- `monitorTemperatura.js`: observa as mensagens do topico de status
+- `docker-compose.yml`: sobe o broker Mosquitto
 
 ## Como rodar
 
@@ -34,78 +36,92 @@ npm run broker
 npm run monitor
 ```
 
-4. Em outro terminal, rode o dispositivo:
+4. Em outro terminal, rode o sensor:
 
 ```bash
-npm run device
+npm run sensor
 ```
 
-## Como demonstrar o retain
+## Como demonstrar o Retain Flag
 
-Quando o `device` conecta, ele publica no topico `estufa/status` uma mensagem `online` com `retain=true`.
+Quando o `sensor` conecta, ele publica uma mensagem `online` no topico `casa/temperatura` com `retain: true`.
 
-Agora abra mais um terminal e rode novamente:
+Depois disso, abra outro terminal e rode o monitor novamente:
 
 ```bash
-npm run monitor
+npm run monitor -- monitor-2
 ```
 
-Esse novo monitor vai receber na hora a ultima mensagem de status, mesmo tendo entrado depois. Isso acontece porque o broker guardou a mensagem retida.
+Esse segundo monitor vai receber imediatamente a ultima mensagem publicada, mesmo tendo entrado depois.
 
-## Como demonstrar o LWT
+Isso mostra o funcionamento do `retain`: o broker guarda a ultima mensagem daquele topico e entrega para novos subscribers.
 
-O `device` foi configurado com um `LWT` no mesmo topico de status.
+## Como demonstrar o Last Will and Testament
 
-Agora, no terminal do `device`, pressione `Ctrl+C`.
+O `sensor` tambem foi configurado com um `LWT`.
 
-Como o script termina sem avisar normalmente ao broker, o broker entende que a conexao caiu de forma inesperada e publica automaticamente a mensagem `offline`.
+Agora, no terminal do sensor, pressione `Ctrl+C`.
 
-O monitor vai mostrar essa mudanca de status.
+O script encerra sem mandar um `DISCONNECT` normal. Com isso, o broker entende que a conexao caiu de forma inesperada e publica automaticamente uma mensagem `offline`.
+
+Essa mensagem aparece no `monitor`, mostrando o funcionamento do `Last Will and Testament`.
 
 ## Quando usar cada um
 
-### LWT
+### Quando usar LWT
 
-Use `LWT` quando for importante detectar que um dispositivo caiu ou perdeu conexao.
+O `LWT` deve ser usado quando o sistema precisa perceber rapidamente que um dispositivo caiu ou perdeu conexao.
 
 Exemplos:
 
-- sensor que parou de responder
+- sensor que saiu da rede
 - camera offline
-- controlador que perdeu energia
-- gateway desconectado
+- gateway que perdeu energia
+- controlador que travou
 
-### Retain
+### Quando usar Retain
 
-Use `retain` quando um novo subscriber precisar receber imediatamente o ultimo estado conhecido de um topico.
+O `retain` deve ser usado quando um novo subscriber precisa receber imediatamente o ultimo estado conhecido de um topico.
 
 Exemplos:
 
-- ultimo status de um dispositivo
-- modo atual de operacao
-- ultima temperatura publicada
-- estado atual de um rele ou lampada
+- status atual de um dispositivo
+- ultimo valor de temperatura
+- estado de uma bomba de agua
+- estado de uma lampada ou rele
 
 ## Impactos em um sistema IoT real
 
-### Impacto do LWT
+### Impactos do LWT
 
-Sem `LWT`, o sistema pode demorar para perceber que um dispositivo caiu.
+Em um sistema IoT real, o `LWT` ajuda a detectar falhas de comunicacao com mais rapidez.
 
-Com `LWT`, fica mais facil:
+Impactos praticos:
 
-- detectar falhas rapidamente
-- disparar alertas
-- mostrar status real em dashboards
-- automatizar acoes de contingencia
+- dashboards mostram dispositivos offline de forma mais confiavel
+- alertas podem ser gerados automaticamente
+- o sistema reage mais rapido a falhas
+- facilita monitoramento e manutencao
 
-### Impacto do retain
+### Impactos do Retain
 
-Sem `retain`, quem entrar depois pode ficar sem contexto ate chegar uma nova mensagem.
+Em um sistema IoT real, o `retain` evita que novos consumidores entrem no sistema sem contexto.
 
-Com `retain`, o sistema ganha:
+Impactos praticos:
 
-- inicializacao mais rapida
-- dashboards mais consistentes
-- menos necessidade de esperar nova publicacao
-- leitura imediata do ultimo estado conhecido
+- interfaces carregam com o estado mais recente
+- sistemas nao precisam esperar uma nova publicacao
+- reduz atraso para sincronizar estado
+- melhora consistencia entre dispositivos e aplicacoes
+
+## Observacao sobre o QoS usado
+
+O foco deste trabalho e `LWT` e `retain`, nao comparacao de `QoS`.
+
+Por isso, foi usado `QoS 1` no topico de status, pois ele oferece um equilibrio bom para esse tipo de demonstracao: a mensagem tem confirmacao de entrega sem adicionar a complexidade do `QoS 2`.
+
+## Encerrar o broker
+
+```bash
+npm run broker:down
+```

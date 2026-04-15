@@ -1,14 +1,13 @@
 {
-  "name": "mqtt-lwt-retain-demo",
+  "name": "mqtt-lw-rf",
   "version": "1.0.0",
-  "description": "Demo pratica de MQTT Last Will and Testament e retain flag",
+  "description": "Demonstracao pratica de MQTT Last Will and Testament e Retain Flag",
   "type": "module",
   "scripts": {
     "broker": "docker compose up -d",
     "broker:down": "docker compose down",
-    "monitor": "node src/monitor.js",
-    "device": "node src/device.js",
-    "clear-retained": "node src/clearRetained.js"
+    "monitor": "node monitorTemperatura.js",
+    "sensor": "node sensorTemperatura.js"
   },
   "dependencies": {
     "mqtt": "^5.15.1"
