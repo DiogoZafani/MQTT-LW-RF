@@ -1,3 +1,5 @@
+Diogo Saffiotte Zafani, RA: 1959438
+Vinicius M Ibaraki RA:2009971
 # Trabalho MQTT: LWT e Retain Flag
 
 Este repositorio foi preparado para demonstrar, na pratica, dois recursos do MQTT:
@@ -7,7 +9,7 @@ Este repositorio foi preparado para demonstrar, na pratica, dois recursos do MQT
 
 A ideia da demonstracao e simples:
 
-- um dispositivo publica seu status no topico `casa/temperatura`
+- um dispositivo publica seu status no topico `casa/temperatura` a cada 5 segundos
 - um monitor se inscreve nesse topico para acompanhar o que acontece
 
 ## O que foi implementado
@@ -59,6 +61,8 @@ Isso mostra o funcionamento do `retain`: o broker guarda a ultima mensagem daque
 ## Como demonstrar o Last Will and Testament
 
 O `sensor` tambem foi configurado com um `LWT`.
+
+Enquanto estiver conectado, ele continua publicando mensagens `online` a cada 5 segundos para simular um heartbeat.
 
 Agora, no terminal do sensor, pressione `Ctrl+C`.
 
